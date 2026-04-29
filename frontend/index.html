@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RecipeApp | Login</title>
+    <meta name="description" content="Sign in to your RecipeApp account to manage your delicious recipes.">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <a href="index.html" class="logo">RecipeApp</a>
+    </header>
+
+    <div class="container auth-wrapper">
+        <div class="glass-panel auth-card" id="auth-container">
+            <h1 id="auth-title">Welcome Back</h1>
+            <p id="auth-subtitle">Sign in to your account to continue</p>
+            
+            <div class="error-msg" id="error-message"></div>
+
+            <form id="auth-form">
+                <div class="form-group" id="name-group" style="display: none;">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" class="glass-input" placeholder="Enter your name">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" class="glass-input" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" class="glass-input" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="btn" id="submit-btn" style="width: 100%;">
+                    <span>Sign In</span>
+                </button>
+            </form>
+
+            <div class="auth-switch">
+                <span id="switch-text">Don't have an account?</span>
+                <a href="#" id="switch-link">Sign Up</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        // Check if already logged in
+        if (localStorage.getItem('token')) {
+            window.location.href = 'dashboard.html';
+        }
+
+        let isLogin = true;
+        const form = document.getElementById('auth-form');
+        const switchLink = document.getElementById('switch-link');
+        const authTitle = document.getElementById('auth-title');
+        const authSubtitle = document.getElementById('auth-subtitle');
+        const nameGroup = document.getElementById('name-group');
+        const nameInput = document.getElementById('name');
+        const submitBtn = document.getElementById('submit-btn');
+        const errorMsg = document.getElementById('error-message');
+        const switchText = document.getElementById('switch-text');
+
+        switchLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            isLogin = !isLogin;
+            errorMsg.style.display = 'none';
+            
+            if (isLogin) {
+                authTitle.textContent = 'Welcome Back';
+                authSubtitle.textContent = 'Sign in to your account to continue';
+                nameGroup.style.display = 'none';
+                nameInput.removeAttribute('required');
+                submitBtn.innerHTML = '<span>Sign In</span>';
+                switchText.textContent = "Don't have an account?";
+                switchLink.textContent = "Sign Up";
+            } else {
+                authTitle.textContent = 'Create Account';
+                authSubtitle.textContent = 'Sign up to get started';
+                nameGroup.style.display = 'block';
+                nameInput.setAttribute('required', 'true');
+                submitBtn.innerHTML = '<span>Sign Up</span>';
+                switchText.textContent = "Already have an account?";
+                switchLink.textContent = "Sign In";
+            }
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const name = document.getElementById('name').value;
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<div class="loader"></div>';
+            errorMsg.style.display = 'none';
+
+            try {
+                if (isLogin) {
+                    const response = await ApiService.login(email, password);
+                    if (response.token) {
+                        localStorage.setItem('token', response.token);
+                        window.location.href = 'dashboard.html';
+                    }
+                } else {
+                    await ApiService.register(email, password, name);
+                    // After registration, log them in automatically
+                    const response = await ApiService.login(email, password);
+                    if (response.token) {
+                        localStorage.setItem('token', response.token);
+                        window.location.href = 'dashboard.html';
+                    }
+                }
+            } catch (err) {
+                errorMsg.textContent = err.message || 'An error occurred. Please try again.';
+                errorMsg.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<span>${isLogin ? 'Sign In' : 'Sign Up'}</span>`;
+            }
+        });
+    </script>
+</body>
+</html>
