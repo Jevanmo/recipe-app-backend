@@ -3,12 +3,24 @@
         {
             "src": "app/wsgi.py",
             "use": "@vercel/python"
+        },
+        {
+            "src": "frontend/**",
+            "use": "@vercel/static"
         }
     ],
     "routes": [
         {
+            "src": "/api/(.*)",
+            "dest": "/app/wsgi.py"
+        },
+        {
+            "src": "/admin/(.*)",
+            "dest": "/app/wsgi.py"
+        },
+        {
             "src": "/(.*)",
-            "dest": "app/wsgi.py"
+            "dest": "/frontend/$1"
         }
     ]
 }
